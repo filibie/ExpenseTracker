@@ -144,3 +144,45 @@ def test_delete_existing_expense():
 def test_delete_non_existing_expense():
   res = client.delete("/expenses/999")
   assert res.status_code == 404
+
+
+def test_edit_existing_expense():
+  post_res = client.post(
+    "/expenses",
+    json={
+      "description": "Coffee",
+      "amount": 6.99,
+      "category": "Food"
+    }
+  )
+
+  expense_id = post_res.json()["id"]
+
+  update_res = client.put(
+    f"/expenses/{expense_id}",
+    json={
+      "description": "NewCoffee",
+      "amount": 7.99,
+      "category": "NewFood"
+    }
+  )
+
+  assert update_res.status_code == 200
+  assert update_res.json()["id"] == expense_id
+  assert update_res.json()["description"] == "NewCoffee"
+  assert update_res.json()["amount"] == 7.99
+  assert update_res.json()["category"] == "NewFood"
+
+
+def test_invalid_edit_expense():
+  res = client.put(
+    "/expenses/999",
+    json={
+      "description": "Coffee",
+      "amount": 6.99,
+      "category": "Food"
+    }
+  )
+                  
+
+  assert res.status_code == 404

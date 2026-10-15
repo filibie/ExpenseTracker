@@ -7,6 +7,7 @@ from app.database import (
     get_expenses,
     get_expense_by_id,
     delete_expense,
+    update_expense,
 )
 
 app = FastAPI()
@@ -56,3 +57,22 @@ def remove_expense(expense_id: int):
   res = delete_expense(expense_id, app.state.database_path)
   if not res:
     raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Expense not found")
+
+
+@app.put("/expenses/{expense_id}")
+def edit_expense(expense_id: int, expense: Expense):
+  updated_expense = update_expense(
+    expense_id,
+    expense.description,
+    expense.amount,
+    expense.category,
+    app.state.database_path,
+  )
+
+  if updated_expense is None:
+    raise HTTPException(
+      status_code=status.HTTP_404_NOT_FOUND,
+      detail="Expense not found"
+    )
+
+  return updated_expense

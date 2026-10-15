@@ -91,3 +91,34 @@ def delete_expense(expense_id: int, database_path=DATABASE_PATH) -> bool:
     connection.close()
 
     return row_count > 0
+
+
+def update_expense(
+    expense_id: int,
+    description: str,
+    amount: float,
+    category: str,
+    database_path=DATABASE_PATH
+    ) -> dict | None:
+    connection = sqlite3.connect(database_path)
+    connection.row_factory = sqlite3.Row
+
+    cursor = connection.execute(
+        """
+        UPDATE expenses 
+        SET description = ?, amount = ?, category = ?
+        WHERE id = ?
+        """,
+        (description, amount, category, expense_id,),
+    )
+
+    connection.commit()
+
+    if cursor.rowcount == 0:
+        connection.close()
+        return None
+
+    updated_expense = get_expense_by_id(expense_id, database_path)
+    connection.close()
+
+    return updated_expense

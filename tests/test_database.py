@@ -4,6 +4,7 @@ from app.database import (
     get_expenses,
     get_expense_by_id,
     delete_expense,
+    update_expense,
 )
 
 def test_insert_expense(tmp_path):
@@ -86,3 +87,27 @@ def test_delete_non_existing_expense(tmp_path):
 
     result = delete_expense(999, database_path)
     assert result is False
+
+
+def test_update_existing_expense(tmp_path):
+    database_path = tmp_path / "test_expenses.db"
+    create_tables(database_path)
+    
+    created_expense = insert_expense("Coffee", 9.99, "Food", database_path)
+    expense_id = created_expense["id"]
+
+    updated_expense = update_expense(expense_id, "UpdatedCoffee", 5.99, "UpdatedFood", database_path)
+
+    assert updated_expense["id"] == expense_id
+    assert updated_expense["description"] == "UpdatedCoffee"
+    assert updated_expense["amount"] == 5.99
+    assert updated_expense["category"] == "UpdatedFood"
+
+
+def test_update_non_existing_expense(tmp_path):
+    database_path = tmp_path / "test_expenses.db"
+    create_tables(database_path)
+
+    updated_expense = update_expense(999, "UpdatedCoffee", 5.99, "UpdatedFood", database_path)
+
+    assert updated_expense is None
