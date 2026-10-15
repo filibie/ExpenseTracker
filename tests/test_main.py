@@ -53,3 +53,34 @@ def test_create_expense_invalid_amount():
 
   assert response.status_code == 422
   assert len(client.get("/expenses").json()) == 0
+
+
+def test_create_multiple_expenses():
+  response_1 = client.post(
+    "/expenses",
+    json={
+      "description": "Pizza",
+      "amount": 32.50,
+      "category": "Food",
+    }
+  )
+
+  assert response_1.status_code == 201
+  assert response_1.json()["id"] == 1
+
+  response_2 = client.post(
+    "/expenses",
+    json={
+      "description": "Bus ticket",
+      "amount": 4.80,
+      "category": "Transport",
+    }
+  )
+
+  assert response_2.status_code == 201
+  assert response_2.json()["id"] == 2
+
+  get_response = client.get("/expenses").json()
+  assert len(get_response) == 2
+  assert get_response[0]["category"] == "Food"
+  assert get_response[1]["category"] == "Transport"
