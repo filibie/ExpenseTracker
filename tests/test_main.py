@@ -121,3 +121,26 @@ def test_read_missing_expense():
   response = client.get("/expenses/999")
 
   assert response.status_code == 404
+
+
+def test_delete_existing_expense():
+  expense = client.post(
+    "/expenses",
+    json={
+      "description": "Coffee",
+      "amount": 9.99,
+      "category": "Food"
+    })
+
+  expense_id = expense.json()["id"]
+
+  delete_res = client.delete(f"/expenses/{expense_id}")
+  assert delete_res.status_code == 204
+
+  get_res = client.get(f"/expenses/{expense_id}")
+  assert get_res.status_code == 404
+
+
+def test_delete_non_existing_expense():
+  res = client.delete("/expenses/999")
+  assert res.status_code == 404

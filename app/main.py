@@ -6,6 +6,7 @@ from app.database import (
     insert_expense,
     get_expenses,
     get_expense_by_id,
+    delete_expense,
 )
 
 app = FastAPI()
@@ -40,6 +41,7 @@ def create_expense(expense: Expense):
     app.state.database_path,
   )
 
+
 @app.get("/expenses/{expense_id}")
 def read_expense(expense_id: int):
   result = get_expense_by_id(expense_id, app.state.database_path)
@@ -47,3 +49,10 @@ def read_expense(expense_id: int):
     raise HTTPException(status.HTTP_404_NOT_FOUND, detail="Expense not found")
 
   return result
+
+
+@app.delete("/expenses/{expense_id}", status_code=status.HTTP_204_NO_CONTENT)
+def remove_expense(expense_id: int):
+  res = delete_expense(expense_id, app.state.database_path)
+  if not res:
+    raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Expense not found")

@@ -74,3 +74,20 @@ def get_expense_by_id(expense_id: int, database_path=DATABASE_PATH):
         return dict(row)
     
     return None
+
+
+def delete_expense(expense_id: int, database_path=DATABASE_PATH) -> bool:
+    connection = sqlite3.connect(database_path)
+    connection.row_factory = sqlite3.Row
+
+    cursor = connection.execute(
+        """
+        DELETE FROM expenses WHERE id = ?
+        """,
+        (expense_id,),
+    )
+    connection.commit()
+    row_count = cursor.rowcount
+    connection.close()
+
+    return row_count > 0
