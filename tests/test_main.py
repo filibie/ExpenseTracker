@@ -184,5 +184,4 @@ def test_invalid_edit_expense():
     }
   )
                   
-
   assert res.status_code == 404

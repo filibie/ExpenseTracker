@@ -22,13 +22,14 @@ def get_expenses(database_path=DATABASE_PATH):
     connection = sqlite3.connect(database_path)
     connection.row_factory = sqlite3.Row
 
-    expenses = connection.execute(
-        """
-        SELECT * FROM expenses ORDER BY id
-        """
-    ).fetchall()
-
-    connection.close()
+    try:
+        expenses = connection.execute(
+            """
+            SELECT * FROM expenses ORDER BY id
+            """
+        ).fetchall()
+    finally:
+        connection.close()
 
     return [dict(row) for row in expenses]
 
@@ -61,19 +62,17 @@ def insert_expense(description: str, amount: float, category: str, database_path
 def get_expense_by_id(expense_id: int, database_path=DATABASE_PATH):
     connection = sqlite3.connect(database_path)
     connection.row_factory = sqlite3.Row
-
-    row = connection.execute(
-        """
-        SELECT * FROM expenses WHERE id = ?
-        """,
-        (expense_id,),
-    ).fetchone()
-
-    connection.close()
-    if row is not None:
-        return dict(row)
+    try:
+        row = connection.execute(
+            """
+            SELECT * FROM expenses WHERE id = ?
+            """,
+            (expense_id,),
+        ).fetchone()
+    finally:
+        connection.close()
     
-    return None
+    return dict(row) if row is not None else None
 
 
 def delete_expense(expense_id: int, database_path=DATABASE_PATH) -> bool:
@@ -122,3 +121,28 @@ def update_expense(
     connection.close()
 
     return updated_expense
+
+
+def get_expense_summary(database_path=DATABASE_PATH):
+    connection = sqlite3.connect(database_path)
+    connection.row_factory = sqlite3.Row
+
+    try:   
+        row = connection.execute(
+            """
+            SELECT 
+                SUM(amount) AS total_spent,
+                COUNT(*) AS expense_count,
+                AVG(amount) AS average_expense
+            FROM expenses
+            """
+        ).fetchone()
+
+    finally:
+        connection.close()
+
+    return {
+        "total_spent": row["total_spent"] or 0,
+        "expense_count" : row["expense_count"],
+        "average_expense": row["average_expense"] or 0,
+    }

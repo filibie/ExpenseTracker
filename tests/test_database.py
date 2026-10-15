@@ -1,3 +1,5 @@
+import pytest
+
 from app.database import (
     create_tables,
     insert_expense,
@@ -5,6 +7,7 @@ from app.database import (
     get_expense_by_id,
     delete_expense,
     update_expense,
+    get_expense_summary,
 )
 
 def test_insert_expense(tmp_path):
@@ -111,3 +114,18 @@ def test_update_non_existing_expense(tmp_path):
     updated_expense = update_expense(999, "UpdatedCoffee", 5.99, "UpdatedFood", database_path)
 
     assert updated_expense is None
+
+
+def test_get_expense_summary(tmp_path):
+    database_path = str(tmp_path / "test.db")
+    create_tables(database_path)
+
+    insert_expense("Coffee", 4.50, "Food", database_path)
+    insert_expense("Lunch", 12.00, "Food", database_path)
+    insert_expense("Bus ticket", 3.40, "Transport", database_path)
+
+    summary = get_expense_summary(database_path)
+
+    assert summary["total_spent"] == 19.90
+    assert summary["expense_count"] == 3
+    assert summary["average_expense"] == pytest.approx(19.90 / 3)
