@@ -2,15 +2,22 @@ import pytest
 from fastapi.testclient import TestClient
 
 from app.main import app
+from app.database import (
+  create_tables
+)
 
 client = TestClient(app)
 
 @pytest.fixture(autouse=True)
-def reset_expenses():
-  from app import main
+def reset_database(tmp_path):
+  database_path = tmp_path / "test_expenses.db"
 
-  main.expenses.clear()
-  main.next_id = 1
+  create_tables(database_path)
+  app.state.database_path = database_path
+
+  yield
+
+  app.state.database_path = "expenses.db"
 
 
 def test_home():

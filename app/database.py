@@ -1,0 +1,58 @@
+import sqlite3
+
+DATABASE_PATH = "expenses.db"
+
+def create_tables(database_path=DATABASE_PATH):
+    connection = sqlite3.connect(database_path)
+
+    connection.execute("""
+        CREATE TABLE IF NOT EXISTS expenses (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            description TEXT NOT NULL,
+            amount REAL NOT NULL,
+            category TEXT NOT NULL
+        )
+    """)
+
+    connection.commit()
+    connection.close()
+
+
+def get_expenses(database_path=DATABASE_PATH):
+    connection = sqlite3.connect(database_path)
+    connection.row_factory = sqlite3.Row
+
+    expenses = connection.execute(
+        """
+        SELECT * FROM expenses ORDER BY id
+        """
+    ).fetchall()
+
+    connection.close()
+
+    return [dict(row) for row in expenses]
+
+
+def insert_expense(description: str, amount: float, category: str, database_path=DATABASE_PATH) -> dict:
+    connection = sqlite3.connect(database_path)
+    connection.row_factory = sqlite3.Row
+
+    cursor = connection.execute(
+        """
+        INSERT INTO expenses(description, amount, category)
+        VALUES (?, ?, ?)
+        """,
+        (description, amount, category),
+    )
+
+    connection.commit()
+
+    expense = dict(
+        connection.execute(
+            "SELECT * FROM expenses WHERE id = ?",
+            (cursor.lastrowid,),
+        ).fetchone()
+    )
+
+    connection.close()
+    return expense

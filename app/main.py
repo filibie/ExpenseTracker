@@ -1,15 +1,24 @@
 from fastapi import FastAPI, status
 from pydantic import BaseModel
 
+from app.database import (
+    create_tables,
+    insert_expense,
+    get_expenses,
+)
+
 app = FastAPI()
+
+DATABASE_PATH = "expenses.db"
+app.state.database_path = DATABASE_PATH
+
+create_tables(DATABASE_PATH)
 
 class Expense(BaseModel):
   description: str
   amount: float
   category: str
 
-expenses = []
-next_id = 1
 
 @app.get("/")
 def home():
@@ -17,16 +26,15 @@ def home():
 
 
 @app.get("/expenses")
-def get_expenses():
-  return expenses
+def read_expenses():
+  return get_expenses(app.state.database_path)
 
 
 @app.post("/expenses", status_code=status.HTTP_201_CREATED)
 def create_expense(expense: Expense):
-  global next_id
-  new_expense = expense.model_dump()
-  new_expense["id"] = next_id
-  expenses.append(new_expense)
-  next_id += 1
-
-  return new_expense
+  return insert_expense(
+    expense.description,
+    expense.amount,
+    expense.category,
+    app.state.database_path,
+  )
