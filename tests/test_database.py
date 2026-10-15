@@ -2,6 +2,7 @@ from app.database import (
     create_tables,
     insert_expense,
     get_expenses,
+    get_expense_by_id,
 )
 
 def test_insert_expense(tmp_path):
@@ -36,3 +37,29 @@ def test_get_expenses(tmp_path):
     assert expenses[1]["description"] == "Bus ticket"
     assert expenses[1]["amount"] == 8.80
     assert expenses[1]["category"] == "Transport"
+
+
+def test_get_existing_expense_by_id(tmp_path):
+    database_path = tmp_path / "test_expenses.db"
+    create_tables(database_path)
+
+    new_expense = insert_expense(
+        "Pizza",
+        35.50,
+        "Food",
+        database_path
+    )
+
+    expense_id = new_expense["id"]
+
+    expense_by_id = get_expense_by_id(expense_id, database_path)
+    assert expense_by_id is not None
+    assert expense_by_id["description"] == "Pizza"
+
+
+def test_get_expense_by_non_existing_id(tmp_path):
+    database_path = tmp_path / "test_expenses.db"
+    create_tables(database_path)
+
+    non_existing_expense = get_expense_by_id(999, database_path)
+    assert non_existing_expense is None

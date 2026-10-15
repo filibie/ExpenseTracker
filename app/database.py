@@ -56,3 +56,21 @@ def insert_expense(description: str, amount: float, category: str, database_path
 
     connection.close()
     return expense
+
+
+def get_expense_by_id(expense_id: int, database_path=DATABASE_PATH):
+    connection = sqlite3.connect(database_path)
+    connection.row_factory = sqlite3.Row
+
+    row = connection.execute(
+        """
+        SELECT * FROM expenses WHERE id = ?
+        """,
+        (expense_id,),
+    ).fetchone()
+
+    connection.close()
+    if row is not None:
+        return dict(row)
+    
+    return None

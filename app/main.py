@@ -1,10 +1,11 @@
-from fastapi import FastAPI, status
+from fastapi import FastAPI, status, HTTPException
 from pydantic import BaseModel
 
 from app.database import (
     create_tables,
     insert_expense,
     get_expenses,
+    get_expense_by_id,
 )
 
 app = FastAPI()
@@ -38,3 +39,11 @@ def create_expense(expense: Expense):
     expense.category,
     app.state.database_path,
   )
+
+@app.get("/expenses/{expense_id}")
+def read_expense(expense_id: int):
+  result = get_expense_by_id(expense_id, app.state.database_path)
+  if result is None:
+    raise HTTPException(status.HTTP_404_NOT_FOUND, detail="Expense not found")
+
+  return result

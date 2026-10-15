@@ -91,3 +91,33 @@ def test_create_multiple_expenses():
   assert len(get_response) == 2
   assert get_response[0]["category"] == "Food"
   assert get_response[1]["category"] == "Transport"
+
+
+def test_read_expense():
+  post_response = client.post(
+    "/expenses",
+    json={
+      "description": "Coffee",
+      "amount": 9.99,
+      "category": "Food"
+    }
+  )
+
+  expense_id = post_response.json()["id"]
+  assert expense_id is not None
+
+  result = client.get(
+    f"/expenses/{expense_id}"
+  )
+
+  assert result.status_code == 200
+  assert result.json()["description"] == "Coffee"
+  assert result.json()["amount"] == 9.99
+  assert result.json()["category"] == "Food"
+  assert result.json()["id"] == expense_id
+
+
+def test_read_missing_expense():
+  response = client.get("/expenses/999")
+
+  assert response.status_code == 404
