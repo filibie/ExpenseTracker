@@ -8,6 +8,7 @@ from app.database import (
     delete_expense,
     update_expense,
     get_expense_summary,
+    get_expenses_by_category,
 )
 
 def test_insert_expense(tmp_path):
@@ -129,3 +130,19 @@ def test_get_expense_summary(tmp_path):
     assert summary["total_spent"] == 19.90
     assert summary["expense_count"] == 3
     assert summary["average_expense"] == pytest.approx(19.90 / 3)
+
+
+def test_get_expenses_by_category(tmp_path):
+    database_path = str(tmp_path / "test.db")
+    create_tables(database_path)
+
+    insert_expense("Coffee", 4.50, "Food", database_path)
+    insert_expense("Lunch", 12.00, "Food", database_path)
+    insert_expense("Bus ticket", 3.40, "Transport", database_path)
+
+    result = get_expenses_by_category(database_path)
+
+    assert result == {
+        "Food": 16.50,
+        "Transport": 3.40,
+    }

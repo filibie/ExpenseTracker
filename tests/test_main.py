@@ -1,5 +1,6 @@
 import pytest
 from fastapi.testclient import TestClient
+from datetime import date
 
 from app.main import app
 from app.database import (
@@ -45,6 +46,7 @@ def test_create_expense():
     "description": "Pizza",
     "amount": 32.5,
     "category": "Food",
+    "date": date.today().isoformat(),
   }
 
 
@@ -185,3 +187,73 @@ def test_invalid_edit_expense():
   )
                   
   assert res.status_code == 404
+
+
+def test_expenses_summary():
+  client.post(
+    "/expenses",
+    json={
+      "description": "Coffee",
+      "amount": 4.50,
+      "category": "Food",
+    },
+  )
+
+  client.post(
+    "/expenses",
+    json={
+      "description": "Lunch",
+      "amount": 12.00,
+      "category": "Food",
+    },
+  )
+  
+  client.post(
+    "/expenses",
+    json={
+      "description": "Bus ticket",
+      "amount": 3.40,
+      "category": "Transport",
+    },
+  )
+
+  res = client.get("/expenses/summary")
+  assert res.status_code == 200
+  assert res.json()["total_spent"] == pytest.approx(19.90)
+  assert res.json()["average_expense"] ==  pytest.approx(19.90 / 3)
+  assert res.json()["expense_count"] == 3
+
+
+def test_expenses_by_category():
+  client.post(
+      "/expenses",
+      json={
+          "description": "Coffee",
+          "amount": 4.50,
+          "category": "Food",
+      },
+  )
+  client.post(
+      "/expenses",
+      json={
+          "description": "Lunch",
+          "amount": 12.00,
+          "category": "Food",
+      },
+  )
+  client.post(
+      "/expenses",
+      json={
+          "description": "Bus ticket",
+          "amount": 3.40,
+          "category": "Transport",
+      },
+  )
+
+  response = client.get("/expenses/by-category")
+
+  assert response.status_code == 200
+  assert response.json() == {
+      "Food": 16.50,
+      "Transport": 3.40,
+  }

@@ -1,5 +1,6 @@
+from datetime import date as Date
 from fastapi import FastAPI, status, HTTPException
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 
 from app.database import (
     create_tables,
@@ -8,6 +9,8 @@ from app.database import (
     get_expense_by_id,
     delete_expense,
     update_expense,
+    get_expense_summary,
+    get_expenses_by_category,
 )
 
 app = FastAPI()
@@ -21,6 +24,7 @@ class Expense(BaseModel):
   description: str
   amount: float
   category: str
+  date: Date = Field(default_factory=Date.today)
 
 
 @app.get("/")
@@ -40,7 +44,18 @@ def create_expense(expense: Expense):
     expense.amount,
     expense.category,
     app.state.database_path,
+    expense.date.isoformat(),
   )
+
+
+@app.get("/expenses/summary")
+def expense_summary():
+  return get_expense_summary(app.state.database_path)
+
+
+@app.get("/expenses/by-category")
+def expenses_by_category():
+  return get_expenses_by_category(app.state.database_path)
 
 
 @app.get("/expenses/{expense_id}")
