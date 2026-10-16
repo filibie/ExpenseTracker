@@ -11,6 +11,7 @@ from app.database import (
     update_expense,
     get_expense_summary,
     get_expenses_by_category,
+    get_monthly_expenses,
 )
 
 app = FastAPI()
@@ -56,6 +57,11 @@ def expense_summary():
 @app.get("/expenses/by-category")
 def expenses_by_category():
   return get_expenses_by_category(app.state.database_path)
+
+
+@app.get("/expenses/by-month")
+def expenses_by_month():
+    return get_monthly_expenses(app.state.database_path)
 
 
 @app.get("/expenses/{expense_id}")

@@ -9,6 +9,7 @@ from app.database import (
     update_expense,
     get_expense_summary,
     get_expenses_by_category,
+    get_monthly_expenses,
 )
 
 def test_insert_expense(tmp_path):
@@ -145,4 +146,26 @@ def test_get_expenses_by_category(tmp_path):
     assert result == {
         "Food": 16.50,
         "Transport": 3.40,
+    }
+
+
+def test_get_monthly_expenses(tmp_path):
+    database_path = str(tmp_path / "test.db")
+    create_tables(database_path)
+
+    insert_expense(
+        "Coffee", 4.50, "Food", database_path, "2026-09-10"
+    )
+    insert_expense(
+        "Lunch", 12.00, "Food", database_path, "2026-09-20"
+    )
+    insert_expense(
+        "Concert", 80.00, "Entertainment", database_path, "2026-10-05"
+    )
+
+    result = get_monthly_expenses(database_path)
+
+    assert result == {
+        "2026-09": 16.50,
+        "2026-10": 80.00,
     }

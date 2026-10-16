@@ -257,3 +257,55 @@ def test_expenses_by_category():
       "Food": 16.50,
       "Transport": 3.40,
   }
+
+def test_create_expense_with_custom_date():
+  response = client.post(
+      "/expenses",
+      json={
+          "description": "Concert ticket",
+          "amount": 80.0,
+          "category": "Entertainment",
+          "date": "2026-09-15",
+      },
+  )
+
+  assert response.status_code == 201
+  assert response.json()["date"] == "2026-09-15"
+
+
+def test_expenses_by_month():
+  client.post(
+      "/expenses",
+      json={
+          "description": "Coffee",
+          "amount": 4.50,
+          "category": "Food",
+          "date": "2026-09-10",
+      },
+  )
+  client.post(
+      "/expenses",
+      json={
+          "description": "Lunch",
+          "amount": 12.00,
+          "category": "Food",
+          "date": "2026-09-20",
+      },
+  )
+  client.post(
+      "/expenses",
+      json={
+          "description": "Concert",
+          "amount": 80.00,
+          "category": "Entertainment",
+          "date": "2026-10-05",
+      },
+  )
+
+  response = client.get("/expenses/by-month")
+
+  assert response.status_code == 200
+  assert response.json() == {
+      "2026-09": 16.50,
+      "2026-10": 80.00,
+  }

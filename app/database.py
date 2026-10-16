@@ -193,3 +193,28 @@ def get_expenses_by_category(database_path=DATABASE_PATH):
         row["category"]: row["total_spent"]
         for row in rows
     }
+
+
+def get_monthly_expenses(database_path=DATABASE_PATH):
+    connection = sqlite3.connect(database_path)
+    connection.row_factory = sqlite3.Row
+
+    try:   
+        rows = connection.execute(
+            """
+            SELECT 
+                strftime('%Y-%m', date) AS month,
+                sum(amount) AS total_spent
+            FROM expenses 
+            GROUP BY month
+            ORDER BY month
+            """
+        ).fetchall()
+
+        return {
+            row["month"]: row["total_spent"]
+            for row in rows
+        }
+
+    finally:
+        connection.close()
