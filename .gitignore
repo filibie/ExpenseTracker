@@ -5,3 +5,5 @@ __pycache__/
 expenses.db
 expenses.db-*
 .venv-py39-backup/
+category_expenses.png
+monthly_expenses.png
