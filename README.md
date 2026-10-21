@@ -4,6 +4,8 @@ A simple REST API for tracking personal expenses, built with Python, FastAPI, an
 
 This project is a hands-on exercise in backend development, database operations, API design, and automated testing.
 
+![screenshot.png](screenshot.png)
+
 ## Features
 
 - Create new expenses
