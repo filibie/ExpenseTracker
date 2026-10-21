@@ -134,6 +134,46 @@
             font-size: 14px;
         }
 
+        .expenses-section {
+            margin-top: 30px;
+        }
+
+        .table-container {
+            overflow-x: auto;
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            text-align: left;
+        }
+
+        th, td {
+            padding: 14px 18px;
+            border-bottom: 1px solid #eee;
+        }
+
+        th {
+            color: #666;
+            font-size: 0.85rem;
+            text-transform: uppercase;
+        }
+
+        td:last-child, th:last-child {
+            text-align: right;
+        }
+
+        tbody tr:last-child td {
+            border-bottom: none;
+        }
+
+        tbody tr:hover {
+            background: #f8f9fc;
+        }
+
         @media (max-width: 700px) {
             body {
                 padding: 18px;
@@ -240,6 +280,26 @@
         </form>
     </section>
 
+    <section class="expenses-section">
+        <h2>Recent Expenses</h2>
+        <div class="table-container">
+            <table>
+                <thead>
+                    <tr>
+                        <th>Date</th>
+                        <th>Description</th>
+                        <th>Category</th>
+                        <th>Amount</th>
+                    </tr>
+                </thead>
+                <tbody id="expenses-table-body">
+                    <tr>
+                        <td colspan="4">Loading expenses...</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </section>
 </main>
 <script>
     document.getElementById("expense-date").value =
@@ -352,14 +412,6 @@
         });
     }
 
-    async function refreshDashboard() {
-        await Promise.all([
-            loadSummary(),
-            loadMonthlyChart(),
-            loadCategoryChart()
-        ]);
-    }
-
     document.getElementById("expense-form").addEventListener(
         "submit",
         async (event) => {
@@ -413,6 +465,60 @@
             }
         }
     );
+
+    async function loadRecentExpenses() {
+        const response = await fetch("/expenses");
+
+        if (!response.ok) {
+            throw new Error("Could not load expenses");
+        }
+
+        const expenses = await response.json();
+        const tableBody = document.getElementById("expenses-table-body");
+
+        tableBody.replaceChildren();
+
+        if (expenses.length === 0) {
+            const row = document.createElement("tr");
+            const cell = document.createElement("td");
+            cell.colSpan = 4;
+            cell.textContent = "No expenses yet.";
+            row.appendChild(cell);
+            tableBody.appendChild(row);
+            return;
+        }
+
+        // Show the most recent 10 expenses first.
+        expenses.sort((a, b) => b.date.localeCompare(a.date) || b.id - a.id);
+
+        for (const expense of expenses.slice(0, 10)) {
+            const row = document.createElement("tr");
+
+            const dateCell = document.createElement("td");
+            dateCell.textContent = expense.date;
+
+            const descriptionCell = document.createElement("td");
+            descriptionCell.textContent = expense.description;
+
+            const categoryCell = document.createElement("td");
+            categoryCell.textContent = expense.category;
+
+            const amountCell = document.createElement("td");
+            amountCell.textContent = `${Number(expense.amount).toFixed(2)} PLN`;
+
+            row.append(dateCell, descriptionCell, categoryCell, amountCell);
+            tableBody.appendChild(row);
+        }
+    }
+
+    async function refreshDashboard() {
+        await Promise.all([
+            loadSummary(),
+            loadMonthlyChart(),
+            loadCategoryChart(),
+            loadRecentExpenses()
+        ]);
+    }
 
     refreshDashboard().catch(console.error);
 </script>
