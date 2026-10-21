@@ -82,6 +82,133 @@
             border-radius: 10px;
         }
 
+                
+        .expense-form-grid {
+            display: grid;
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+            gap: 16px;
+            margin: 20px 0;
+        }
+
+        .expense-form-grid label {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            font-size: 14px;
+            color: #64748b;
+        }
+
+        .expense-form-grid input,
+        .expense-form-grid select {
+            width: 100%;
+            padding: 11px 12px;
+            border: 1px solid #dbe2ea;
+            border-radius: 8px;
+            background: white;
+            color: #1e293b;
+            font: inherit;
+        }
+
+        #submit-expense {
+            padding: 12px 20px;
+            border: none;
+            border-radius: 8px;
+            background: #5486d8;
+            color: white;
+            font: inherit;
+            font-weight: 600;
+            cursor: pointer;
+        }
+
+        #submit-expense:hover {
+            background: #3f70bf;
+        }
+
+        #submit-expense:disabled {
+            opacity: 0.6;
+            cursor: wait;
+        }
+
+        #form-message {
+            margin-bottom: 0;
+            font-size: 14px;
+        }
+
+        .expenses-section {
+            margin-top: 30px;
+        }
+
+        .table-container {
+            overflow-x: auto;
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            text-align: left;
+        }
+
+        th, td {
+            padding: 14px 18px;
+            border-bottom: 1px solid #eee;
+        }
+
+        th {
+            color: #666;
+            font-size: 0.85rem;
+            text-transform: uppercase;
+        }
+
+        td:last-child, th:last-child {
+            text-align: right;
+        }
+
+        tbody tr:last-child td {
+            border-bottom: none;
+        }
+
+        tbody tr:hover {
+            background: #f8f9fc;
+        }
+
+        .insights-section {
+            margin: 30px 0;
+        }
+
+        .insights-grid {
+            display: grid;
+            grid-template-columns: repeat(3, minmax(0, 1fr));
+            gap: 20px;
+        }
+
+        .insight-card {
+            background: white;
+            padding: 22px;
+            border-radius: 12px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+        }
+
+        .insight-card h3 {
+            margin-top: 0;
+            color: #666;
+            font-size: 0.95rem;
+        }
+
+        .insight-value {
+            font-size: 1.7rem;
+            font-weight: 700;
+            margin: 12px 0 6px;
+        }
+
+        .insight-detail {
+            color: #666;
+            font-size: 0.9rem;
+            margin-bottom: 0;
+        }
+
         @media (max-width: 700px) {
             body {
                 padding: 18px;
@@ -89,6 +216,14 @@
 
             .cards,
             .charts {
+                grid-template-columns: 1fr;
+            }
+
+            .expense-form-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .insights-grid {
                 grid-template-columns: 1fr;
             }
         }
@@ -100,6 +235,30 @@
         <h1>ExpenseTracker</h1>
         <p class="subtitle">Understand your spending at a glance.</p>
     </header>
+
+    <section class="insights-section">
+        <h2>Monthly Insights</h2>
+
+        <div class="insights-grid">
+            <div class="insight-card">
+                <h3 id="current-month-label">This month</h3>
+                <p class="insight-value" id="current-month-total">—</p>
+                <p class="insight-detail" id="spending-change">Loading comparison...</p>
+            </div>
+
+            <div class="insight-card">
+                <h3 id="previous-month-label">Previous month</h3>
+                <p class="insight-value" id="previous-month-total">—</p>
+                <p class="insight-detail">Total spending</p>
+            </div>
+
+            <div class="insight-card">
+                <h3>Biggest category</h3>
+                <p class="insight-value" id="biggest-category">—</p>
+                <p class="insight-detail" id="biggest-category-total">Loading category...</p>
+            </div>
+        </div>
+    </section>
 
     <section class="cards">
         <article class="card">
@@ -129,8 +288,89 @@
             <canvas id="category-chart"></canvas>
         </article>
     </section>
+    
+    <section class="card" style="margin-bottom: 20px;">
+        <h2>Add an expense</h2>
+
+        <form id="expense-form">
+            <div class="expense-form-grid">
+                <label>
+                    Description
+                    <input
+                        type="text"
+                        name="description"
+                        placeholder="e.g. Lunch"
+                        required
+                    >
+                </label>
+
+                <label>
+                    Amount (PLN)
+                    <input
+                        type="number"
+                        name="amount"
+                        min="0.01"
+                        step="0.01"
+                        placeholder="25.50"
+                        required
+                    >
+                </label>
+
+                <label>
+                    Category
+                    <select name="category" required>
+                        <option value="">Choose a category</option>
+                        <option value="Food">Food</option>
+                        <option value="Transport">Transport</option>
+                        <option value="Bills">Bills</option>
+                        <option value="Entertainment">Entertainment</option>
+                        <option value="Shopping">Shopping</option>
+                        <option value="Other">Other</option>
+                    </select>
+                </label>
+
+                <label>
+                    Date
+                    <input type="date" name="date" id="expense-date" required>
+                </label>
+            </div>
+
+            <button type="submit" id="submit-expense">
+                Add expense
+            </button>
+
+            <p id="form-message" role="status" aria-live="polite"></p>
+        </form>
+    </section>
+
+    <section class="expenses-section">
+        <h2>Recent Expenses</h2>
+        <div class="table-container">
+            <table>
+                <thead>
+                    <tr>
+                        <th>Date</th>
+                        <th>Description</th>
+                        <th>Category</th>
+                        <th>Amount</th>
+                    </tr>
+                </thead>
+                <tbody id="expenses-table-body">
+                    <tr>
+                        <td colspan="4">Loading expenses...</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </section>
 </main>
 <script>
+    document.getElementById("expense-date").value =
+    new Date().toLocaleDateString("en-CA");
+
+    let monthlyChart = null;
+    let categoryChart = null;
+ 
     async function loadSummary() {
         try {
             const response = await fetch("/expenses/summary");
@@ -166,7 +406,11 @@
     const months = Object.keys(data).sort();
     const totals = months.map(month => data[month]);
 
-    new Chart(document.getElementById("monthly-chart"), {
+    if (monthlyChart) {
+        monthlyChart.destroy();
+    }
+
+    monthlyChart = new Chart(document.getElementById("monthly-chart"), {
             type: "bar",
             data: {
                 labels: months,
@@ -203,7 +447,11 @@
         const categories = Object.keys(data);
         const totals = Object.values(data);
 
-        new Chart(document.getElementById("category-chart"), {
+        if (categoryChart) {
+            categoryChart.destroy();
+        }
+    
+        categoryChart = new Chart(document.getElementById("category-chart"), {
             type: "doughnut",
             data: {
                 labels: categories,
@@ -227,8 +475,174 @@
         });
     }
 
-    loadMonthlyChart().catch(console.error);
-    loadCategoryChart().catch(console.error);
+    document.getElementById("expense-form").addEventListener(
+        "submit",
+        async (event) => {
+            event.preventDefault();
+
+            const form = event.currentTarget;
+            const submitButton = document.getElementById("submit-expense");
+            const message = document.getElementById("form-message");
+
+            const formData = new FormData(form);
+
+            const expense = {
+                description: formData.get("description").trim(),
+                amount: Number(formData.get("amount")),
+                category: formData.get("category"),
+                date: formData.get("date")
+            };
+
+            submitButton.disabled = true;
+            message.textContent = "Saving expense...";
+
+            try {
+                const response = await fetch("/expenses", {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json"
+                    },
+                    body: JSON.stringify(expense)
+                });
+
+                if (!response.ok) {
+                    const error = await response.json();
+                    throw new Error(
+                        error.detail || "Could not save expense"
+                    );
+                }
+
+                await response.json();
+                await refreshDashboard();
+
+                form.reset();
+                document.getElementById("expense-date").value =
+                    new Date().toLocaleDateString("en-CA");
+
+                message.textContent = "Expense added successfully!";
+            } catch (error) {
+                console.error(error);
+                message.textContent = `Error: ${error.message}`;
+            } finally {
+                submitButton.disabled = false;
+            }
+        }
+    );
+
+    async function loadRecentExpenses() {
+        const response = await fetch("/expenses");
+
+        if (!response.ok) {
+            throw new Error("Could not load expenses");
+        }
+
+        const expenses = await response.json();
+        const tableBody = document.getElementById("expenses-table-body");
+
+        tableBody.replaceChildren();
+
+        if (expenses.length === 0) {
+            const row = document.createElement("tr");
+            const cell = document.createElement("td");
+            cell.colSpan = 4;
+            cell.textContent = "No expenses yet.";
+            row.appendChild(cell);
+            tableBody.appendChild(row);
+            return;
+        }
+
+        // Show the most recent 10 expenses first.
+        expenses.sort((a, b) => b.date.localeCompare(a.date) || b.id - a.id);
+
+        for (const expense of expenses.slice(0, 10)) {
+            const row = document.createElement("tr");
+
+            const dateCell = document.createElement("td");
+            dateCell.textContent = expense.date;
+
+            const descriptionCell = document.createElement("td");
+            descriptionCell.textContent = expense.description;
+
+            const categoryCell = document.createElement("td");
+            categoryCell.textContent = expense.category;
+
+            const amountCell = document.createElement("td");
+            amountCell.textContent = `${Number(expense.amount).toFixed(2)} PLN`;
+
+            row.append(dateCell, descriptionCell, categoryCell, amountCell);
+            tableBody.appendChild(row);
+        }
+    }
+
+    async function loadMonthlyInsights() {
+        const response = await fetch("/expenses/insights");
+
+        if (!response.ok) {
+            throw new Error("Could not load monthly insights");
+        }
+
+        const insights = await response.json();
+
+        const formatMoney = (amount) =>
+            `${Number(amount).toFixed(2)} PLN`;
+
+        const formatMonth = (month) => {
+            const [year, monthNumber] = month.split("-");
+            return new Date(Number(year), Number(monthNumber) - 1)
+                .toLocaleDateString("en-GB", {
+                    month: "long",
+                    year: "numeric"
+                });
+        };
+
+        document.getElementById("current-month-label").textContent =
+            formatMonth(insights.current_month);
+
+        document.getElementById("current-month-total").textContent =
+            formatMoney(insights.current_total);
+
+        document.getElementById("previous-month-label").textContent =
+            formatMonth(insights.previous_month);
+
+        document.getElementById("previous-month-total").textContent =
+            formatMoney(insights.previous_total);
+
+        const changeElement = document.getElementById("spending-change");
+
+        if (insights.change_percentage === null) {
+            changeElement.textContent = "No spending last month to compare";
+        } else if (insights.change_percentage > 0) {
+            changeElement.textContent =
+                `${insights.change_percentage}% more than last month`;
+        } else if (insights.change_percentage < 0) {
+            changeElement.textContent =
+                `${Math.abs(insights.change_percentage)}% less than last month`;
+        } else {
+            changeElement.textContent = "Same spending as last month";
+        }
+
+        const biggestCategory = insights.biggest_category;
+
+        document.getElementById("biggest-category").textContent =
+            biggestCategory ? biggestCategory.category : "No expenses yet";
+
+        document.getElementById("biggest-category-total").textContent =
+            biggestCategory
+                ? formatMoney(biggestCategory.total_spent)
+                : "Nothing spent this month";
+    }
+
+    async function refreshDashboard() {
+        await Promise.all([
+            loadSummary(),
+            loadMonthlyChart(),
+            loadCategoryChart(),
+            loadRecentExpenses(),
+            loadMonthlyInsights()
+        ]);
+    }
+
+    refreshDashboard().catch(console.error);
 </script>
 </body>
 </html>

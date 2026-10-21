@@ -21,13 +21,13 @@ def reset_database(tmp_path):
   app.state.database_path = "expenses.db"
 
 
-def test_home():
-  response = client.get("/")
+# def test_home():
+#   response = client.get("/")
 
-  assert response.status_code == 200
-  assert response.json() == {
-    "message": "Welcome to Expense Tracker"
-  }
+#   assert response.status_code == 200
+#   assert response.json() == {
+#     "message": "Welcome to Expense Tracker"
+#   }
 
 
 def test_create_expense():

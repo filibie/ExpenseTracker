@@ -14,6 +14,8 @@ from app.database import (
     get_expense_summary,
     get_expenses_by_category,
     get_monthly_expenses,
+    get_monthly_spending_comparison,
+    get_biggest_spending_category,
 )
 
 app = FastAPI()
@@ -65,6 +67,21 @@ def expenses_by_category():
 @app.get("/expenses/by-month")
 def expenses_by_month():
     return get_monthly_expenses(app.state.database_path)
+
+
+@app.get("/expenses/insights")
+def monthly_insights():
+    comparison = get_monthly_spending_comparison(
+        app.state.database_path
+    )
+    biggest_category = get_biggest_spending_category(
+        app.state.database_path
+    )
+
+    return {
+        **comparison,
+        "biggest_category": biggest_category,
+    }
 
 
 @app.get("/expenses/{expense_id}")

@@ -1,4 +1,5 @@
 import sqlite3
+from datetime import date
 
 DATABASE_PATH = "expenses.db"
 
@@ -216,5 +217,85 @@ def get_monthly_expenses(database_path=DATABASE_PATH):
             for row in rows
         }
 
+    finally:
+        connection.close()
+
+
+def get_monthly_spending_comparison(
+    database_path=DATABASE_PATH,
+    reference_date=None,
+):
+    if reference_date is None:
+        reference_date = date.today()
+
+    if isinstance(reference_date, str):
+        reference_date = date.fromisoformat(reference_date)
+
+    current_month = reference_date.strftime("%Y-%m")
+
+    first_day_current_month = reference_date.replace(day=1)
+    last_day_previous_month = first_day_current_month - date.resolution
+    previous_month = last_day_previous_month.strftime("%Y-%m")
+
+    monthly_expenses = get_monthly_expenses(database_path)
+
+    current_total = monthly_expenses.get(current_month, 0.0)
+    previous_total = monthly_expenses.get(previous_month, 0.0)
+
+    if previous_total == 0:
+        change_percentage = None
+    else:
+        change_percentage = round(
+            (current_total - previous_total) / previous_total * 100,
+            2,
+        )
+
+    return {
+        "current_month": current_month,
+        "current_total": current_total,
+        "previous_month": previous_month,
+        "previous_total": previous_total,
+        "change_percentage": change_percentage,
+    }
+
+
+def get_biggest_spending_category(
+    database_path=DATABASE_PATH,
+    reference_date=None,
+):
+    if reference_date is None:
+        reference_date = date.today()
+
+    if isinstance(reference_date, str):
+        reference_date = date.fromisoformat(reference_date)
+
+    current_month = reference_date.strftime("%Y-%m")
+
+    connection = sqlite3.connect(database_path)
+    connection.row_factory = sqlite3.Row
+
+    try:
+        cursor = connection.cursor()
+        cursor.execute(
+            """
+            SELECT category, SUM(amount) AS total_spent
+            FROM expenses
+            WHERE strftime('%Y-%m', date) = ?
+            GROUP BY category
+            ORDER BY total_spent DESC
+            LIMIT 1
+            """,
+            (current_month,),
+        )
+
+        row = cursor.fetchone()
+
+        if row is None:
+            return None
+
+        return {
+            "category": row["category"],
+            "total_spent": row["total_spent"],
+        }
     finally:
         connection.close()
