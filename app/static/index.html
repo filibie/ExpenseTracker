@@ -174,6 +174,41 @@
             background: #f8f9fc;
         }
 
+        .insights-section {
+            margin: 30px 0;
+        }
+
+        .insights-grid {
+            display: grid;
+            grid-template-columns: repeat(3, minmax(0, 1fr));
+            gap: 20px;
+        }
+
+        .insight-card {
+            background: white;
+            padding: 22px;
+            border-radius: 12px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+        }
+
+        .insight-card h3 {
+            margin-top: 0;
+            color: #666;
+            font-size: 0.95rem;
+        }
+
+        .insight-value {
+            font-size: 1.7rem;
+            font-weight: 700;
+            margin: 12px 0 6px;
+        }
+
+        .insight-detail {
+            color: #666;
+            font-size: 0.9rem;
+            margin-bottom: 0;
+        }
+
         @media (max-width: 700px) {
             body {
                 padding: 18px;
@@ -187,6 +222,10 @@
             .expense-form-grid {
                 grid-template-columns: 1fr;
             }
+
+            .insights-grid {
+                grid-template-columns: 1fr;
+            }
         }
     </style>
 </head>
@@ -196,6 +235,30 @@
         <h1>ExpenseTracker</h1>
         <p class="subtitle">Understand your spending at a glance.</p>
     </header>
+
+    <section class="insights-section">
+        <h2>Monthly Insights</h2>
+
+        <div class="insights-grid">
+            <div class="insight-card">
+                <h3 id="current-month-label">This month</h3>
+                <p class="insight-value" id="current-month-total">—</p>
+                <p class="insight-detail" id="spending-change">Loading comparison...</p>
+            </div>
+
+            <div class="insight-card">
+                <h3 id="previous-month-label">Previous month</h3>
+                <p class="insight-value" id="previous-month-total">—</p>
+                <p class="insight-detail">Total spending</p>
+            </div>
+
+            <div class="insight-card">
+                <h3>Biggest category</h3>
+                <p class="insight-value" id="biggest-category">—</p>
+                <p class="insight-detail" id="biggest-category-total">Loading category...</p>
+            </div>
+        </div>
+    </section>
 
     <section class="cards">
         <article class="card">
@@ -511,12 +574,71 @@
         }
     }
 
+    async function loadMonthlyInsights() {
+        const response = await fetch("/expenses/insights");
+
+        if (!response.ok) {
+            throw new Error("Could not load monthly insights");
+        }
+
+        const insights = await response.json();
+
+        const formatMoney = (amount) =>
+            `${Number(amount).toFixed(2)} PLN`;
+
+        const formatMonth = (month) => {
+            const [year, monthNumber] = month.split("-");
+            return new Date(Number(year), Number(monthNumber) - 1)
+                .toLocaleDateString("en-GB", {
+                    month: "long",
+                    year: "numeric"
+                });
+        };
+
+        document.getElementById("current-month-label").textContent =
+            formatMonth(insights.current_month);
+
+        document.getElementById("current-month-total").textContent =
+            formatMoney(insights.current_total);
+
+        document.getElementById("previous-month-label").textContent =
+            formatMonth(insights.previous_month);
+
+        document.getElementById("previous-month-total").textContent =
+            formatMoney(insights.previous_total);
+
+        const changeElement = document.getElementById("spending-change");
+
+        if (insights.change_percentage === null) {
+            changeElement.textContent = "No spending last month to compare";
+        } else if (insights.change_percentage > 0) {
+            changeElement.textContent =
+                `${insights.change_percentage}% more than last month`;
+        } else if (insights.change_percentage < 0) {
+            changeElement.textContent =
+                `${Math.abs(insights.change_percentage)}% less than last month`;
+        } else {
+            changeElement.textContent = "Same spending as last month";
+        }
+
+        const biggestCategory = insights.biggest_category;
+
+        document.getElementById("biggest-category").textContent =
+            biggestCategory ? biggestCategory.category : "No expenses yet";
+
+        document.getElementById("biggest-category-total").textContent =
+            biggestCategory
+                ? formatMoney(biggestCategory.total_spent)
+                : "Nothing spent this month";
+    }
+
     async function refreshDashboard() {
         await Promise.all([
             loadSummary(),
             loadMonthlyChart(),
             loadCategoryChart(),
-            loadRecentExpenses()
+            loadRecentExpenses(),
+            loadMonthlyInsights()
         ]);
     }
 

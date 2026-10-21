@@ -10,6 +10,8 @@ from app.database import (
     get_expense_summary,
     get_expenses_by_category,
     get_monthly_expenses,
+    get_monthly_spending_comparison,
+    get_biggest_spending_category,
 )
 
 def test_insert_expense(tmp_path):
@@ -168,4 +170,46 @@ def test_get_monthly_expenses(tmp_path):
     assert result == {
         "2026-09": 16.50,
         "2026-10": 80.00,
+    }
+
+
+def test_get_monthly_spending_comparison(tmp_path):
+    database_path = str(tmp_path / "test.db")
+    create_tables(database_path)
+
+    insert_expense("Coffee", 10.00, "Food", database_path, "2026-09-10")
+    insert_expense("Lunch", 40.00, "Food", database_path, "2026-09-20")
+    insert_expense("Concert", 80.00, "Entertainment", database_path, "2026-10-05")
+
+    result = get_monthly_spending_comparison(
+        database_path,
+        reference_date="2026-10-21",
+    )
+
+    assert result == {
+        "current_month": "2026-10",
+        "current_total": 80.00,
+        "previous_month": "2026-09",
+        "previous_total": 50.00,
+        "change_percentage": 60.0,
+    }
+
+
+def test_get_biggest_spending_category(tmp_path):
+    database_path = str(tmp_path / "test.db")
+    create_tables(database_path)
+
+    insert_expense("Coffee", 10.00, "Food", database_path, "2026-10-10")
+    insert_expense("Lunch", 40.00, "Food", database_path, "2026-10-12")
+    insert_expense("Concert", 80.00, "Entertainment", database_path, "2026-10-15")
+    insert_expense("Bus ticket", 15.00, "Transport", database_path, "2026-09-10")
+
+    result = get_biggest_spending_category(
+        database_path,
+        reference_date="2026-10-21",
+    )
+
+    assert result == {
+        "category": "Entertainment",
+        "total_spent": 80.00,
     }
