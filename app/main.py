@@ -1,6 +1,8 @@
 from datetime import date as Date
 from fastapi import FastAPI, status, HTTPException
 from pydantic import BaseModel, Field
+from pathlib import Path
+from fastapi.responses import FileResponse
 
 from app.database import (
     create_tables,
@@ -27,10 +29,11 @@ class Expense(BaseModel):
   category: str
   date: Date = Field(default_factory=Date.today)
 
+STATIC_DIR = Path(__file__).resolve().parent / "static"
 
 @app.get("/")
 def home():
-  return { "message": "Welcome to Expense Tracker" }
+  return FileResponse(STATIC_DIR / "index.html")
 
 
 @app.get("/expenses")

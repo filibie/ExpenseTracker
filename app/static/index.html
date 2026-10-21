@@ -1,0 +1,234 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ExpenseTracker Dashboard</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            margin: 0;
+            padding: 32px;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI",
+                         sans-serif;
+            background: #f4f6fb;
+            color: #1e293b;
+        }
+
+        main {
+            max-width: 1100px;
+            margin: 0 auto;
+        }
+
+        header {
+            margin-bottom: 28px;
+        }
+
+        h1 {
+            margin-bottom: 8px;
+        }
+
+        .subtitle {
+            color: #64748b;
+        }
+
+        .cards {
+            display: grid;
+            grid-template-columns: repeat(3, minmax(0, 1fr));
+            gap: 16px;
+        }
+
+        .card {
+            padding: 24px;
+            background: white;
+            border-radius: 14px;
+            box-shadow: 0 2px 8px #0f172a0a;
+        }
+
+        .card h2 {
+            margin: 0 0 12px;
+            font-size: 14px;
+            font-weight: 500;
+            color: #64748b;
+        }
+
+        .value {
+            font-size: 28px;
+            font-weight: 700;
+        }
+
+        .charts {
+            display: grid;
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+            gap: 16px;
+            margin-top: 20px;
+        }
+
+        .charts canvas {
+            width: 100%;
+            max-height: 320px;
+        }
+
+        .chart-placeholder {
+            min-height: 220px;
+            display: grid;
+            place-items: center;
+            color: #94a3b8;
+            border: 2px dashed #e2e8f0;
+            border-radius: 10px;
+        }
+
+        @media (max-width: 700px) {
+            body {
+                padding: 18px;
+            }
+
+            .cards,
+            .charts {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+<main>
+    <header>
+        <h1>ExpenseTracker</h1>
+        <p class="subtitle">Understand your spending at a glance.</p>
+    </header>
+
+    <section class="cards">
+        <article class="card">
+            <h2>Total spent</h2>
+            <div class="value" id="total-spent">—</div>
+        </article>
+
+        <article class="card">
+            <h2>Number of expenses</h2>
+            <div class="value" id="expense-count">—</div>
+        </article>
+
+        <article class="card">
+            <h2>Average expense</h2>
+            <div class="value" id="average-expense">—</div>
+        </article>
+    </section>
+
+    <section class="charts">
+        <article class="card">
+            <h2>Monthly spending</h2>
+            <canvas id="monthly-chart"></canvas>
+        </article>
+
+        <article class="card">
+            <h2>Spending by category</h2>
+            <canvas id="category-chart"></canvas>
+        </article>
+    </section>
+</main>
+<script>
+    async function loadSummary() {
+        try {
+            const response = await fetch("/expenses/summary");
+
+            if (!response.ok) {
+                throw new Error("Failed to load expense summary");
+            }
+
+            const summary = await response.json();
+
+            document.getElementById("total-spent").textContent =
+                `${Number(summary.total_spent).toFixed(2)} zł`;
+
+            document.getElementById("expense-count").textContent =
+                summary.expense_count;
+
+            document.getElementById("average-expense").textContent =
+                `${Number(summary.average_expense).toFixed(2)} zł`;
+        } catch (error) {
+            console.error("Could not load summary:", error);
+        }
+    }
+
+    loadSummary();
+
+    async function loadMonthlyChart() {
+    const response = await fetch("/expenses/by-month");
+    if (!response.ok) {
+        throw new Error("Failed to load monthly expenses");
+    }
+
+    const data = await response.json();
+    const months = Object.keys(data).sort();
+    const totals = months.map(month => data[month]);
+
+    new Chart(document.getElementById("monthly-chart"), {
+            type: "bar",
+            data: {
+                labels: months,
+                datasets: [{
+                    label: "Spending (PLN)",
+                    data: totals,
+                    backgroundColor: "#5486d8",
+                    borderRadius: 6
+                }]
+            },
+            options: {
+                responsive: true,
+                plugins: {
+                    legend: {
+                        display: false
+                    }
+                },
+                scales: {
+                    y: {
+                        beginAtZero: true
+                    }
+                }
+            }
+        });
+    }
+
+    async function loadCategoryChart() {
+        const response = await fetch("/expenses/by-category");
+        if (!response.ok) {
+            throw new Error("Failed to load category expenses");
+        }
+
+        const data = await response.json();
+        const categories = Object.keys(data);
+        const totals = Object.values(data);
+
+        new Chart(document.getElementById("category-chart"), {
+            type: "doughnut",
+            data: {
+                labels: categories,
+                datasets: [{
+                    data: totals,
+                    backgroundColor: [
+                        "#5486d8",
+                        "#5bb89a",
+                        "#f2b45b",
+                        "#df7890",
+                        "#9b87d4",
+                        "#7bb7c7"
+                    ],
+                    borderWidth: 2,
+                    borderColor: "#ffffff"
+                }]
+            },
+            options: {
+                responsive: true
+            }
+        });
+    }
+
+    loadMonthlyChart().catch(console.error);
+    loadCategoryChart().catch(console.error);
+</script>
+</body>
+</html>
