@@ -1,7 +1,8 @@
 import sqlite3
+from pathlib import Path
 from datetime import date
 
-DATABASE_PATH = "expenses.db"
+DATABASE_PATH = Path(__file__).resolve().parent.parent / "expenses.db"
 
 def create_tables(database_path=DATABASE_PATH):
     connection = sqlite3.connect(database_path)

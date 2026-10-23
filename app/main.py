@@ -5,23 +5,23 @@ from pathlib import Path
 from fastapi.responses import FileResponse
 
 from app.database import (
-    create_tables,
-    insert_expense,
-    get_expenses,
-    get_expense_by_id,
-    delete_expense,
-    update_expense,
-    get_expense_summary,
-    get_expenses_by_category,
-    get_monthly_expenses,
-    get_monthly_spending_comparison,
-    get_biggest_spending_category,
+  DATABASE_PATH,
+  create_tables,
+  insert_expense,
+  get_expenses,
+  get_expense_by_id,
+  delete_expense,
+  update_expense,
+  get_expense_summary,
+  get_expenses_by_category,
+  get_monthly_expenses,
+  get_monthly_spending_comparison,
+  get_biggest_spending_category,
 )
 
 app = FastAPI()
 
-DATABASE_PATH = "expenses.db"
-app.state.database_path = DATABASE_PATH
+app.state.database_path = str(DATABASE_PATH)
 
 create_tables(DATABASE_PATH)
 
