@@ -39,7 +39,7 @@ A personal expense tracking application built with Python, FastAPI, and SQLite. 
 Clone the repository and enter the project directory:
 
 ```bash
-git clone <your-repository-url>
+git clone git@github.com:filibie/ExpenseTracker
 cd ExpenseTracker
 ```
 
