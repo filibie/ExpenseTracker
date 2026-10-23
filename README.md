@@ -2,7 +2,7 @@
 
 A personal expense tracking application built with Python, FastAPI, and SQLite. It combines expense management with interactive visualizations and monthly spending insights to make financial data easier to understand.
 
-![screenshot.png](screenshot.png)
+<!-- ![screenshot.png](screenshot.png) -->
 
 ## Features
 
@@ -84,7 +84,7 @@ The dashboard brings expense tracking and analytics together in one interface.
 
 It displays spending summaries, monthly and category charts, month-to-month comparisons, the largest spending category, and recent transactions. Expenses can be added through the dashboard, with the displayed statistics and charts refreshed after submission.
 
-<!-- Add a screenshot of the dashboard here once one is saved in the repository. -->
+![ExpenseTracker Dashboard](screenshot.png)
 
 ## API Overview
 
