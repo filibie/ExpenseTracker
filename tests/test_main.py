@@ -4,30 +4,24 @@ from datetime import date
 
 from app.main import app
 from app.database import (
-  create_tables
+  create_tables,
+  insert_expense,
+  DATABASE_PATH,
 )
 
 client = TestClient(app)
+
 
 @pytest.fixture(autouse=True)
 def reset_database(tmp_path):
   database_path = tmp_path / "test_expenses.db"
 
   create_tables(database_path)
-  app.state.database_path = database_path
+  app.state.database_path = str(database_path)
 
   yield
 
-  app.state.database_path = "expenses.db"
-
-
-# def test_home():
-#   response = client.get("/")
-
-#   assert response.status_code == 200
-#   assert response.json() == {
-#     "message": "Welcome to Expense Tracker"
-#   }
+  app.state.database_path = str(DATABASE_PATH)
 
 
 def test_create_expense():
@@ -309,3 +303,102 @@ def test_expenses_by_month():
       "2026-09": 16.50,
       "2026-10": 80.00,
   }
+
+
+def test_get_expenses_with_date_range():
+    client.post("/expenses", json={
+        "description": "Coffee",
+        "amount": 12.50,
+        "category": "Food",
+        "date": "2026-10-05",
+    })
+    client.post("/expenses", json={
+        "description": "Bus ticket",
+        "amount": 5.00,
+        "category": "Transport",
+        "date": "2026-10-12",
+    })
+    client.post("/expenses", json={
+        "description": "Groceries",
+        "amount": 45.00,
+        "category": "Food",
+        "date": "2026-10-20",
+    })
+
+    response = client.get(
+        "/expenses",
+        params={
+            "start_date": "2026-10-10",
+            "end_date": "2026-10-15",
+        },
+    )
+
+    assert response.status_code == 200
+    expenses = response.json()
+    assert len(expenses) == 1
+    assert expenses[0]["description"] == "Bus ticket"
+
+
+def test_expense_summary_with_date_range():
+    expenses = [
+        ("Coffee", 10.0, "Food", "2026-10-05"),
+        ("Bus ticket", 20.0, "Transport", "2026-10-12"),
+        ("Groceries", 40.0, "Food", "2026-10-20"),
+    ]
+
+    for description, amount, category, date in expenses:
+        response = client.post("/expenses", json={
+            "description": description,
+            "amount": amount,
+            "category": category,
+            "date": date,
+        })
+        assert response.status_code == 201
+
+    response = client.get(
+        "/expenses/summary",
+        params={
+            "start_date": "2026-10-10",
+            "end_date": "2026-10-15",
+        },
+    )
+
+    assert response.status_code == 200
+
+    summary = response.json()
+
+    assert summary["total_spent"] == 20.0
+    assert summary["expense_count"] == 1
+    assert summary["average_expense"] == 20.0
+
+
+def test_expenses_by_category_with_date_range():
+    expenses = [
+        ("Coffee", 10.0, "Food", "2026-10-05"),
+        ("Bus", 20.0, "Transport", "2026-10-12"),
+        ("Lunch", 30.0, "Food", "2026-10-14"),
+        ("Groceries", 50.0, "Food", "2026-10-20"),
+    ]
+
+    for description, amount, category, date in expenses:
+        response = client.post("/expenses", json={
+            "description": description,
+            "amount": amount,
+            "category": category,
+            "date": date,
+        })
+        assert response.status_code == 201
+
+    response = client.get(
+        "/expenses/by-category",
+        params={
+            "start_date": "2026-10-10",
+            "end_date": "2026-10-15",
+        },
+    )
+
+    assert response.status_code == 200
+    assert response.json() == {
+        "Food": 30.0,
+        "Transport": 20.0,
+    }

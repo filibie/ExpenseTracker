@@ -35,15 +35,34 @@ def create_tables(database_path=DATABASE_PATH):
         connection.close()
 
 
-def get_expenses(database_path=DATABASE_PATH):
+def get_expenses(
+    database_path=DATABASE_PATH,
+    start_date=None,
+    end_date=None,
+):
     connection = sqlite3.connect(database_path)
     connection.row_factory = sqlite3.Row
 
     try:
+        query = "SELECT * FROM expenses"
+        conditions = []
+        parameters = []
+
+        if start_date is not None:
+            conditions.append("date >= ?")
+            parameters.append(start_date)
+
+        if end_date is not None:
+            conditions.append("date <= ?")
+            parameters.append(end_date)
+
+        if conditions:
+            query += " WHERE " + " AND ".join(conditions)
+
+        query += " ORDER BY id"
+
         expenses = connection.execute(
-            """
-            SELECT * FROM expenses ORDER BY id
-            """
+            query, parameters
         ).fetchall()
     finally:
         connection.close()
@@ -148,53 +167,55 @@ def update_expense(
     return updated_expense
 
 
-def get_expense_summary(database_path=DATABASE_PATH):
-    connection = sqlite3.connect(database_path)
-    connection.row_factory = sqlite3.Row
+def get_expense_summary(
+    database_path=DATABASE_PATH,
+    start_date=None,
+    end_date=None,
+):
+    expenses = get_expenses(
+        database_path,
+        start_date=start_date,
+        end_date=end_date,
+    )
 
-    try:   
-        row = connection.execute(
-            """
-            SELECT 
-                SUM(amount) AS total_spent,
-                COUNT(*) AS expense_count,
-                AVG(amount) AS average_expense
-            FROM expenses
-            """
-        ).fetchone()
+    total_spent = sum(expense["amount"] for expense in expenses)
+    expense_count = len(expenses)
 
-    finally:
-        connection.close()
+    average_expense = (
+        total_spent / expense_count
+        if expense_count > 0
+        else 0
+    )
 
     return {
-        "total_spent": row["total_spent"] or 0,
-        "expense_count" : row["expense_count"],
-        "average_expense": row["average_expense"] or 0,
+        "total_spent": round(total_spent, 2),
+        "expense_count": expense_count,
+        "average_expense": average_expense,
     }
 
 
-def get_expenses_by_category(database_path=DATABASE_PATH):
-    connection = sqlite3.connect(database_path)
-    connection.row_factory = sqlite3.Row
+def get_expenses_by_category(
+    database_path=DATABASE_PATH,
+    start_date=None,
+    end_date=None,
+):
+    expenses = get_expenses(
+        database_path,
+        start_date=start_date,
+        end_date=end_date,
+    )
 
-    try:   
-        rows = connection.execute(
-            """
-            SELECT 
-                category, 
-                sum(amount) AS total_spent
-            FROM expenses 
-            GROUP BY category
-            """
-        ).fetchall()
+    category_totals = {}
 
-    finally:
-        connection.close()
+    for expense in expenses:
+        category = expense["category"]
+        amount = expense["amount"]
 
-    return {
-        row["category"]: row["total_spent"]
-        for row in rows
-    }
+        category_totals[category] = (
+            category_totals.get(category, 0) + amount
+        )
+
+    return category_totals
 
 
 def get_monthly_expenses(database_path=DATABASE_PATH):

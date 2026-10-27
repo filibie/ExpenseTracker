@@ -213,3 +213,42 @@ def test_get_biggest_spending_category(tmp_path):
         "category": "Entertainment",
         "total_spent": 80.00,
     }
+
+
+def test_get_expenses_by_date_range(tmp_path):
+    database_path = tmp_path / "test.db"
+    create_tables(database_path)
+
+    insert_expense("Coffee", 12.50, "Food", database_path, "2026-10-05")
+    insert_expense("Bus ticket", 5.00, "Transport", database_path, "2026-10-12")
+    insert_expense("Groceries", 45.00, "Food", database_path, "2026-10-20")
+
+    expenses = get_expenses(
+        database_path,
+        start_date="2026-10-10",
+        end_date="2026-10-15",
+    )
+
+    assert len(expenses) == 1
+    assert expenses[0]["description"] == "Bus ticket"
+
+
+def test_get_expenses_by_category_with_date_range(tmp_path):
+    database_path = tmp_path / "test.db"
+    create_tables(database_path)
+
+    insert_expense("Coffee", 10.0, "Food", database_path, "2026-10-05")
+    insert_expense("Bus", 20.0, "Transport", database_path, "2026-10-12")
+    insert_expense("Lunch", 30.0, "Food", database_path, "2026-10-14")
+    insert_expense("Groceries", 50.0, "Food", database_path, "2026-10-20")
+
+    result = get_expenses_by_category(
+        database_path,
+        start_date="2026-10-10",
+        end_date="2026-10-15",
+    )
+
+    assert result == {
+        "Food": 30.0,
+        "Transport": 20.0,
+    }
