@@ -252,3 +252,23 @@ def test_get_expenses_by_category_with_date_range(tmp_path):
         "Food": 30.0,
         "Transport": 20.0,
     }
+
+
+def test_get_monthly_expenses_with_date_range(tmp_path):
+    database_path = tmp_path / "test.db"
+    create_tables(database_path)
+
+    insert_expense("Coffee", 10.0, "Food", database_path, "2026-09-25")
+    insert_expense("Lunch", 20.0, "Food", database_path, "2026-10-05")
+    insert_expense("Groceries", 30.0, "Food", database_path, "2026-10-15")
+    insert_expense("Bus", 40.0, "Transport", database_path, "2026-11-02")
+
+    result = get_monthly_expenses(
+        database_path,
+        start_date="2026-10-01",
+        end_date="2026-10-20",
+    )
+
+    assert result == {
+        "2026-10": 50.0,
+    }

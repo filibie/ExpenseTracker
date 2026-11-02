@@ -402,3 +402,34 @@ def test_expenses_by_category_with_date_range():
         "Food": 30.0,
         "Transport": 20.0,
     }
+
+
+def test_expenses_by_month_with_date_range():
+    expenses = [
+        ("Coffee", 10.0, "Food", "2026-09-25"),
+        ("Lunch", 20.0, "Food", "2026-10-05"),
+        ("Groceries", 30.0, "Food", "2026-10-15"),
+        ("Bus", 40.0, "Transport", "2026-11-02"),
+    ]
+
+    for description, amount, category, date in expenses:
+        response = client.post("/expenses", json={
+            "description": description,
+            "amount": amount,
+            "category": category,
+            "date": date,
+        })
+        assert response.status_code == 201
+
+    response = client.get(
+        "/expenses/by-month",
+        params={
+            "start_date": "2026-10-01",
+            "end_date": "2026-10-20",
+        },
+    )
+
+    assert response.status_code == 200
+    assert response.json() == {
+        "2026-10": 50.0,
+    }

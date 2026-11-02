@@ -86,8 +86,15 @@ def expenses_by_category(
 
 
 @app.get("/expenses/by-month")
-def expenses_by_month():
-    return get_monthly_expenses(app.state.database_path)
+def expenses_by_month(
+    start_date: Date | None = None,
+    end_date: Date | None = None,
+):
+    return get_monthly_expenses(
+        app.state.database_path,
+        start_date=start_date.isoformat() if start_date else None,
+        end_date=end_date.isoformat() if end_date else None,
+    )
 
 
 @app.get("/expenses/insights")

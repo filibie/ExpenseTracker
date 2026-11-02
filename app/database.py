@@ -218,29 +218,29 @@ def get_expenses_by_category(
     return category_totals
 
 
-def get_monthly_expenses(database_path=DATABASE_PATH):
-    connection = sqlite3.connect(database_path)
-    connection.row_factory = sqlite3.Row
+def get_monthly_expenses(
+    database_path=DATABASE_PATH,
+    start_date=None,
+    end_date=None,
+):
+    expenses = get_expenses(
+        database_path,
+        start_date=start_date,
+        end_date=end_date,
+    )
 
-    try:   
-        rows = connection.execute(
-            """
-            SELECT 
-                strftime('%Y-%m', date) AS month,
-                sum(amount) AS total_spent
-            FROM expenses 
-            GROUP BY month
-            ORDER BY month
-            """
-        ).fetchall()
+    monthly_totals = {}
 
-        return {
-            row["month"]: row["total_spent"]
-            for row in rows
-        }
+    for expense in expenses:
+        month = expense["date"][:7]
+        amount = expense["amount"]
 
-    finally:
-        connection.close()
+        monthly_totals[month] = (
+            monthly_totals.get(month, 0) + amount
+        )
+
+    return monthly_totals
+
 
 
 def get_monthly_spending_comparison(
