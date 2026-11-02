@@ -39,8 +39,15 @@ def home():
 
 
 @app.get("/expenses")
-def read_expenses():
-  return get_expenses(app.state.database_path)
+def read_expenses(
+    start_date: Date | None = None,
+    end_date: Date | None = None,
+):
+    return get_expenses(
+        app.state.database_path,
+        start_date.isoformat() if start_date else None,
+        end_date.isoformat() if end_date else None,
+    )
 
 
 @app.post("/expenses", status_code=status.HTTP_201_CREATED)
@@ -55,18 +62,39 @@ def create_expense(expense: Expense):
 
 
 @app.get("/expenses/summary")
-def expense_summary():
-  return get_expense_summary(app.state.database_path)
+def expense_summary(
+    start_date: Date | None = None,
+    end_date: Date | None = None,
+):
+    return get_expense_summary(
+        app.state.database_path,
+        start_date=start_date.isoformat() if start_date else None,
+        end_date=end_date.isoformat() if end_date else None,
+    )
 
 
 @app.get("/expenses/by-category")
-def expenses_by_category():
-  return get_expenses_by_category(app.state.database_path)
+def expenses_by_category(
+    start_date: Date | None = None,
+    end_date: Date | None = None,
+):
+    return get_expenses_by_category(
+        app.state.database_path,
+        start_date=start_date.isoformat() if start_date else None,
+        end_date=end_date.isoformat() if end_date else None,
+    )
 
 
 @app.get("/expenses/by-month")
-def expenses_by_month():
-    return get_monthly_expenses(app.state.database_path)
+def expenses_by_month(
+    start_date: Date | None = None,
+    end_date: Date | None = None,
+):
+    return get_monthly_expenses(
+        app.state.database_path,
+        start_date=start_date.isoformat() if start_date else None,
+        end_date=end_date.isoformat() if end_date else None,
+    )
 
 
 @app.get("/expenses/insights")

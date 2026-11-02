@@ -15,7 +15,7 @@
             padding: 32px;
             font-family: -apple-system, BlinkMacSystemFont, "Segoe UI",
                          sans-serif;
-            background: #f4f6fb;
+            background: #d3d3d3;
             color: #1e293b;
         }
 
@@ -65,7 +65,8 @@
             display: grid;
             grid-template-columns: repeat(2, minmax(0, 1fr));
             gap: 16px;
-            margin-top: 20px;
+            margin-top: 24px;
+            margin-bottom: 24px;
         }
 
         .charts canvas {
@@ -107,6 +108,32 @@
             background: white;
             color: #1e293b;
             font: inherit;
+        }
+
+        button {
+            padding: 12px 20px;
+            border: none;
+            border-radius: 8px;
+            background: #5486d8;
+            color: white;
+            font: inherit;
+            font-weight: 600;
+            cursor: pointer;
+        }
+
+        button:hover {
+            background: #3f70bf;
+        }
+
+        button:disabled {
+            opacity: 0.6;
+            cursor: wait;
+        }
+
+        input[type="date"] {
+            padding: 12px 20px;
+            border-radius: 8px;
+            border: none;
         }
 
         #submit-expense {
@@ -343,6 +370,23 @@
         </form>
     </section>
 
+    <section class="date-filter">
+        <h2>Filter by date</h2>
+        
+        <button type="button" id="filter-this-month">
+            This month
+        </button>
+
+        <label for="start-date">From:</label>
+        <input type="date" id="start-date">
+
+        <label for="end-date">To:</label>
+        <input type="date" id="end-date">
+
+        <button id="apply-date-filter">Apply filter</button>
+        <button id="clear-date-filter">Clear</button>
+    </section>
+
     <section class="expenses-section">
         <h2>Recent Expenses</h2>
         <div class="table-container">
@@ -371,9 +415,65 @@
     let monthlyChart = null;
     let categoryChart = null;
  
+    function formatLocalDate(date) {
+        const year = date.getFullYear();
+        const month = String(date.getMonth() + 1).padStart(2, "0");
+        const day = String(date.getDate()).padStart(2, "0");
+
+        return `${year}-${month}-${day}`;
+    }
+
+    function getThisMonthRange() {
+        const today = new Date();
+
+        const start = new Date(
+            today.getFullYear(),
+            today.getMonth(),
+            1
+        );
+
+        const end = new Date(
+            today.getFullYear(),
+            today.getMonth() + 1,
+            0
+        );
+
+        return {
+            startDate: formatLocalDate(start),
+            endDate: formatLocalDate(end)
+        };
+    }
+
+    function getDateFilterParams() {
+        const startDate = document.getElementById("start-date").value;
+        const endDate = document.getElementById("end-date").value;
+
+        const params = new URLSearchParams();
+
+        if (startDate) {
+            params.append("start_date", startDate);
+        }
+
+        if (endDate) {
+            params.append("end_date", endDate);
+        }
+
+        return params.toString();
+    }
+
+
     async function loadSummary() {
         try {
-            const response = await fetch("/expenses/summary");
+            const startDate = document.getElementById("start-date").value;
+            const endDate = document.getElementById("end-date").value;
+
+            const queryString = getDateFilterParams();
+
+            const url = queryString
+                ? `/expenses/summary?${queryString}`
+                : "/expenses/summary";
+
+            const response = await fetch(url);
 
             if (!response.ok) {
                 throw new Error("Failed to load expense summary");
@@ -394,51 +494,63 @@
         }
     }
 
-    loadSummary();
-
     async function loadMonthlyChart() {
-    const response = await fetch("/expenses/by-month");
-    if (!response.ok) {
-        throw new Error("Failed to load monthly expenses");
-    }
+        const queryString = getDateFilterParams();
 
-    const data = await response.json();
-    const months = Object.keys(data).sort();
-    const totals = months.map(month => data[month]);
+        const url = queryString
+            ? `/expenses/by-month?${queryString}`
+            : "/expenses/by-month";
 
-    if (monthlyChart) {
-        monthlyChart.destroy();
-    }
+        const response = await fetch(url);
 
-    monthlyChart = new Chart(document.getElementById("monthly-chart"), {
-            type: "bar",
-            data: {
-                labels: months,
-                datasets: [{
-                    label: "Spending (PLN)",
-                    data: totals,
-                    backgroundColor: "#5486d8",
-                    borderRadius: 6
-                }]
-            },
-            options: {
-                responsive: true,
-                plugins: {
-                    legend: {
-                        display: false
-                    }
+        if (!response.ok) {
+            throw new Error("Failed to load monthly expenses");
+        }
+
+        const data = await response.json();
+        const months = Object.keys(data).sort();
+        const totals = months.map(month => data[month]);
+
+        if (monthlyChart) {
+            monthlyChart.destroy();
+        }
+
+        monthlyChart = new Chart(document.getElementById("monthly-chart"), {
+                type: "bar",
+                data: {
+                    labels: months,
+                    datasets: [{
+                        label: "Spending (PLN)",
+                        data: totals,
+                        backgroundColor: "#5486d8",
+                        borderRadius: 6
+                    }]
                 },
-                scales: {
-                    y: {
-                        beginAtZero: true
+                options: {
+                    responsive: true,
+                    plugins: {
+                        legend: {
+                            display: false
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true
+                        }
                     }
                 }
-            }
-        });
+            });
     }
 
-    async function loadCategoryChart() {
-        const response = await fetch("/expenses/by-category");
+    async function loadCategoryChart() {  
+        const queryString = getDateFilterParams();
+
+        const url = queryString
+            ? `/expenses/by-category?${queryString}`
+            : "/expenses/by-category";
+
+        const response = await fetch(url);
+
         if (!response.ok) {
             throw new Error("Failed to load category expenses");
         }
@@ -529,8 +641,14 @@
         }
     );
 
-    async function loadRecentExpenses() {
-        const response = await fetch("/expenses");
+    async function loadRecentExpenses() {            
+        const startDate = document.getElementById("start-date").value;
+        const endDate = document.getElementById("end-date").value;
+
+        const queryString = getDateFilterParams();        
+        const url = queryString ? `/expenses?${queryString}` : "/expenses";
+
+        const response = await fetch(url);
 
         if (!response.ok) {
             throw new Error("Could not load expenses");
@@ -634,13 +752,55 @@
 
     async function refreshDashboard() {
         await Promise.all([
-            loadSummary(),
             loadMonthlyChart(),
             loadCategoryChart(),
             loadRecentExpenses(),
+            loadSummary(),
             loadMonthlyInsights()
         ]);
     }
+
+    
+    document.getElementById("apply-date-filter").addEventListener(
+        "click",
+        async () => {
+            const startDate = document.getElementById("start-date").value;
+            const endDate = document.getElementById("end-date").value;
+
+            if (startDate && endDate && startDate > endDate) {
+                alert("Start date cannot be after end date.");
+                return;
+            }
+            
+            await refreshDashboard();
+        }
+    );
+
+    document.getElementById("clear-date-filter").addEventListener(
+        "click",
+        async () => {
+            document.getElementById("start-date").value = "";
+            document.getElementById("end-date").value = "";
+
+            await refreshDashboard();
+        }
+    );
+
+    document.getElementById("filter-this-month").addEventListener(
+        "click",
+        async () => {
+            const range = getThisMonthRange();
+
+            document.getElementById("start-date").value =
+                range.startDate;
+
+            document.getElementById("end-date").value =
+                range.endDate;
+
+            await refreshDashboard();
+        }
+    );
+
 
     refreshDashboard().catch(console.error);
 </script>
